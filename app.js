@@ -6,10 +6,6 @@ let model;
 // เก็บข้อมูลจำนวนวัตถุพร้อม timestamp
 let csvLog = [];
 
-// ตัวแปรสำหรับควบคุม interval การบันทึก
-let lastSavedTime = 0;
-const saveInterval = 2000; // 2 วินาที
-
 async function setupCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
@@ -82,20 +78,16 @@ async function detectFrame() {
     document.getElementById('motorbike').innerText = counts.motorbike;
     document.getElementById('person').innerText = counts.person;
 
-    // บันทึกข้อมูลทุก 2 วินาที
-    const now = Date.now();
-    if(now - lastSavedTime > saveInterval){
-        const timestamp = new Date().toISOString();
-        csvLog.push({
-            Timestamp: timestamp,
-            Car: counts.car,
-            Bus: counts.bus,
-            Truck: counts.truck,
-            Motorbike: counts.motorbike,
-            Person: counts.person
-        });
-        lastSavedTime = now;
-    }
+    // บันทึกข้อมูลพร้อม timestamp
+    const timestamp = new Date().toISOString();
+    csvLog.push({
+        Timestamp: timestamp,
+        Car: counts.car,
+        Bus: counts.bus,
+        Truck: counts.truck,
+        Motorbike: counts.motorbike,
+        Person: counts.person
+    });
 
     requestAnimationFrame(detectFrame);
 }
