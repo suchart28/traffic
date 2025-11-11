@@ -2,18 +2,17 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Realtime Vehicle & Pedestrian Counter</title>
+<title>Vehicle & Pedestrian Counter - Timeline + CSV</title>
 <style>
-  body { font-family: Arial; text-align: center; margin: 0; padding: 0; background: #f5f5f5; }
-  h1 { margin-top: 10px; }
+  body { font-family: Arial; text-align: center; margin: 0; padding: 0; }
   video, canvas { border: 1px solid #ccc; margin-top: 10px; }
   #counts { margin-top: 10px; font-size: 18px; }
-  button { font-size: 16px; padding: 5px 10px; margin-top: 10px; }
+  #chartContainer { width: 90%; margin: 20px auto; }
+  button { margin-top: 10px; padding: 10px 20px; font-size: 16px; }
 </style>
 </head>
 <body>
-
-<h1>Realtime Vehicle & Pedestrian Counter</h1>
+<h1>Real-time Vehicle & Pedestrian Counter</h1>
 
 <video id="webcam" width="640" height="480" autoplay muted></video>
 <canvas id="canvas" width="640" height="480"></canvas>
@@ -26,14 +25,17 @@
   คนเดินเท้า: <span id="person">0</span>
 </div>
 
-<div>
-  <button id="downloadCSV">ดาวน์โหลด CSV</button>
+<div id="chartContainer">
+  <canvas id="timelineChart"></canvas>
 </div>
 
-<!-- Libraries -->
+<div>
+  <button id="downloadBtn">ดาวน์โหลด CSV</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.5.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
-
 <script src="app.js"></script>
 </body>
 </html>
