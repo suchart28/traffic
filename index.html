@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Realtime Vehicle & Pedestrian Counter</title>
+<style>
+  body { font-family: Arial; text-align: center; margin: 0; padding: 0; background: #f5f5f5; }
+  h1 { margin-top: 10px; }
+  video, canvas { border: 1px solid #ccc; margin-top: 10px; }
+  #counts { margin-top: 10px; font-size: 18px; }
+  #chart-container { width: 640px; margin: 20px auto; }
+  button { font-size: 16px; padding: 5px 10px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Realtime Vehicle & Pedestrian Counter</h1>
+
+<video id="webcam" width="640" height="480" autoplay muted></video>
+<canvas id="canvas" width="640" height="480"></canvas>
+
+<div id="counts">
+  รถยนต์: <span id="car">0</span> |
+  รถบัส: <span id="bus">0</span> |
+  รถบรรทุก: <span id="truck">0</span> |
+  มอเตอร์ไซค์: <span id="motorbike">0</span> |
+  คนเดินเท้า: <span id="person">0</span>
+</div>
+
+<div id="chart-container">
+  <h2>Realtime Count Graph</h2>
+  <canvas id="chart" width="640" height="200"></canvas>
+</div>
+
+<div>
+  <button id="downloadCSV">ดาวน์โหลด CSV</button>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.5.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- App Script -->
+<script src="app.js"></script>
+</body>
+</html>
