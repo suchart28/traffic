@@ -8,7 +8,6 @@
   h1 { margin-top: 10px; }
   video, canvas { border: 1px solid #ccc; margin-top: 10px; }
   #counts { margin-top: 10px; font-size: 18px; }
-  #chart-container { width: 640px; margin: 20px auto; }
   button { font-size: 16px; padding: 5px 10px; margin-top: 10px; }
 </style>
 </head>
@@ -27,11 +26,6 @@
   คนเดินเท้า: <span id="person">0</span>
 </div>
 
-<div id="chart-container">
-  <h2>Realtime Count Graph</h2>
-  <canvas id="chart" width="640" height="200"></canvas>
-</div>
-
 <div>
   <button id="downloadCSV">ดาวน์โหลด CSV</button>
 </div>
@@ -39,9 +33,7 @@
 <!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.5.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- App Script -->
 <script src="app.js"></script>
 </body>
 </html>
