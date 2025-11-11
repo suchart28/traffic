@@ -11,7 +11,11 @@ let counts = { car: 0, bus: 0, truck: 0, motorbike: 0, person: 0 };
 const history = { time: [], car: [], bus: [], truck: [], motorbike: [], person: [] };
 const maxHistory = 30;
 
-// ตั้งค่า Chart.js แบบ timeline
+// Tracking
+let nextID = 0;
+let trackedObjects = [];
+
+// Chart.js timeline
 const ctxChart = document.getElementById('timelineChart').getContext('2d');
 const timelineChart = new Chart(ctxChart, {
     type: 'line',
@@ -32,53 +36,92 @@ const timelineChart = new Chart(ctxChart, {
     }
 });
 
-// เปิดกล้องเว็บแคม
+// Open webcam
 async function setupCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         video.onloadedmetadata = () => resolve(video);
     });
 }
 
-// โหลดโมเดล Coco-SSD
+// Load Coco-SSD model
 async function loadModel() {
     model = await cocoSsd.load();
     console.log("Model loaded.");
 }
 
-// ตรวจจับวัตถุ
+// IoU function for tracking
+function iou(boxA, boxB) {
+    const [xA, yA, wA, hA] = boxA;
+    const [xB, yB, wB, hB] = boxB;
+    const x1 = Math.max(xA, xB);
+    const y1 = Math.max(yA, yB);
+    const x2 = Math.min(xA + wA, xB + wB);
+    const y2 = Math.min(yA + hA, yB + hB);
+    const interArea = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+    const boxAArea = wA * hA;
+    const boxBArea = wB * hB;
+    return interArea / (boxAArea + boxBArea - interArea);
+}
+
+// Detect & Track
 async function detectFrame() {
     if (!model) return;
 
     const predictions = await model.detect(video);
 
-    // วาด video บน canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // รีเซ็ต counts
-    counts = { car: 0, bus: 0, truck: 0, motorbike: 0, person: 0 };
+    const newTrackedObjects = [];
 
     predictions.forEach(pred => {
-        const [x, y, width, height] = pred.bbox;
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
-        ctx.font = '16px Arial';
-        ctx.fillStyle = 'red';
-        ctx.fillText(pred.class + ' ' + Math.round(pred.score * 100) + '%', x, y > 10 ? y-5 : y+15);
+        let matched = false;
 
-        switch(pred.class) {
-            case 'car': counts.car++; break;
-            case 'bus': counts.bus++; break;
-            case 'truck': counts.truck++; break;
-            case 'motorcycle': counts.motorbike++; break;
-            case 'person': counts.person++; break;
+        for (let obj of trackedObjects) {
+            if (obj.class === pred.class && iou(obj.bbox, pred.bbox) > 0.5) {
+                newTrackedObjects.push({
+                    id: obj.id,
+                    class: obj.class,
+                    bbox: pred.bbox,
+                    counted: obj.counted
+                });
+                matched = true;
+                break;
+            }
+        }
+
+        if (!matched) {
+            newTrackedObjects.push({
+                id: nextID++,
+                class: pred.class,
+                bbox: pred.bbox,
+                counted: false
+            });
         }
     });
 
-    // อัปเดตตัวเลข
+    counts = { car: 0, bus: 0, truck: 0, motorbike: 0, person: 0 };
+
+    newTrackedObjects.forEach(obj => {
+        const [x, y, w, h] = obj.bbox;
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+        ctx.font = '16px Arial';
+        ctx.fillStyle = 'red';
+        ctx.fillText(`${obj.class} ID:${obj.id}`, x, y > 10 ? y-5 : y+15);
+
+        // นับวัตถุเฉพาะครั้งแรก
+        if (!obj.counted) {
+            counts[obj.class === 'motorcycle' ? 'motorbike' : obj.class]++;
+            obj.counted = true;
+        }
+    });
+
+    trackedObjects = newTrackedObjects;
+
     document.getElementById('car').innerText = counts.car;
     document.getElementById('bus').innerText = counts.bus;
     document.getElementById('truck').innerText = counts.truck;
@@ -88,7 +131,7 @@ async function detectFrame() {
     requestAnimationFrame(detectFrame);
 }
 
-// อัปเดต timeline chart ทุก 1 วินาที
+// Update chart
 setInterval(() => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString();
@@ -99,7 +142,6 @@ setInterval(() => {
     history.motorbike.push(counts.motorbike);
     history.person.push(counts.person);
 
-    // จำกัด history
     if (history.time.length > maxHistory) {
         history.time.shift();
         history.car.shift();
@@ -109,7 +151,6 @@ setInterval(() => {
         history.person.shift();
     }
 
-    // อัปเดตกราฟ
     timelineChart.data.labels = history.time;
     timelineChart.data.datasets[0].data = history.car;
     timelineChart.data.datasets[1].data = history.bus;
@@ -119,7 +160,7 @@ setInterval(() => {
     timelineChart.update();
 }, 1000);
 
-// ฟังก์ชันสร้าง CSV
+// Generate CSV
 function generateCSV() {
     let csv = "Timestamp,เวลา,รถยนต์,รถบัส,รถบรรทุก,มอเตอร์ไซค์,คนเดินเท้า\n";
     for(let i = 0; i < history.time.length; i++) {
@@ -129,7 +170,7 @@ function generateCSV() {
     return csv;
 }
 
-// ฟังก์ชันดาวน์โหลด CSV
+// Download CSV
 function downloadCSV(filename = "vehicle_history.csv") {
     const csv = generateCSV();
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -142,12 +183,12 @@ function downloadCSV(filename = "vehicle_history.csv") {
     document.body.removeChild(a);
 }
 
-// ปุ่มดาวน์โหลด CSV
+// Button event
 document.getElementById('downloadBtn').addEventListener('click', () => {
     downloadCSV(`vehicle_history_${new Date().toISOString()}.csv`);
 });
 
-// เริ่มแอป
+// Start app
 async function main() {
     await setupCamera();
     await loadModel();
